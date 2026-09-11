@@ -1,0 +1,14 @@
+from .auth import router as auth_router
+from .categories import router as categories_router
+from .accounts import router as accounts_router
+from .transactions import router as transactions_router
+from .budgets import router as budgets_router
+from .goals import router as goals_router
+from .analytics import router as analytics_router
+from .ai_assistant import router as ai_assistant_router
+from .challenges import router as challenges_router
+from .recurring import router as recurring_router
+from .reports import router as reports_router
+from .settings import router as settings_router
+from .notifications import router as notifications_router
+from .savings import router as savings_router

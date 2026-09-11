@@ -1,0 +1,352 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+@layer base {
+  :root {
+    /* ─── Pure White Light Theme ─── */
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+
+    --primary: 152 60% 28%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 152 60% 28%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    /* ─── Lock In Dark Theme ─── */
+    --background: 28 25% 6%;
+    --foreground: 40 20% 94%;
+
+    --primary: 38 92% 50%;
+    --primary-foreground: 28 25% 6%;
+
+    --secondary: 28 20% 12%;
+    --secondary-foreground: 40 20% 90%;
+
+    --card: 28 22% 8%;
+    --card-foreground: 40 20% 94%;
+
+    --muted: 28 18% 14%;
+    --muted-foreground: 35 15% 60%;
+
+    --accent: 28 20% 15%;
+    --accent-foreground: 40 20% 92%;
+
+    --destructive: 0 65% 48%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 30 20% 18%;
+    --input: 30 20% 18%;
+    --ring: 38 92% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-white text-slate-900 font-sans antialiased relative min-h-screen overflow-x-hidden;
+  }
+}
+
+/* ─── PURE WHITE CLEAN BACKGROUND ─── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  background-color: #ffffff;
+  background-image: 
+    radial-gradient(ellipse at 50% 10%, rgba(16, 185, 129, 0.05) 0%, transparent 60%),
+    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2310b981' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* ─── Solid Pure White Cards & Panels (Zero Blending, High Contrast) ─── */
+.glass-panel {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+}
+
+.dark .glass-panel {
+  background: #111a14 !important;
+  color: #f3f4f6 !important;
+  border: 1px solid #1f3025 !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4) !important;
+}
+
+.glass-header {
+  background: #ffffff !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+}
+
+.dark .glass-header {
+  background: #0d1510 !important;
+  border-bottom: 1px solid #1f3025 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3) !important;
+}
+
+.glass-sidebar {
+  background: #f8fafc !important;
+  border-right: 1px solid #e2e8f0 !important;
+}
+
+.dark .glass-sidebar {
+  background: #0a110d !important;
+  border-right: 1px solid #1f3025 !important;
+}
+
+/* ─── Closable Tabs Bar (Pure White Light Non-Blending) ─── */
+.tab-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  padding: 0.6rem 0.85rem;
+}
+
+.tab-bar-header {
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.dark .tab-bar-header {
+  background: #14100b !important;
+  border-bottom: 2px solid rgba(245, 158, 11, 0.35) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+}
+
+.tab-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.95rem;
+  border-radius: 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+}
+
+/* Vibrant Emerald Active Tab */
+.tab-item-active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #34d399 !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+  transform: translateY(-1px);
+}
+
+.dark .tab-item-active {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  border: 1px solid #fbbf24 !important;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.45);
+}
+
+.tab-item-active span {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Solid Non-Blending Inactive Tab */
+.tab-item-inactive {
+  background: #f8fafc !important;
+  color: #334155 !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.dark .tab-item-inactive {
+  background: #241c14 !important;
+  color: #f3f4f6 !important;
+  border: 1px solid #3d2f22 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.tab-item-inactive:hover {
+  background: #ecfdf5 !important;
+  color: #059669 !important;
+  border-color: #10b981 !important;
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.15);
+}
+
+.dark .tab-item-inactive:hover {
+  background: #33271b !important;
+  color: #fbbf24 !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+}
+
+/* High Visibility Red Close 'X' Button on Tabs */
+.tab-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 9999px;
+  background: #e2e8f0 !important;
+  color: #475569 !important;
+  border: 1px solid #cbd5e1 !important;
+  transition: all 0.2s ease;
+  margin-left: 0.25rem;
+}
+
+.dark .tab-close-btn {
+  background: rgba(0, 0, 0, 0.45) !important;
+  color: #e5e7eb !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.tab-item-active .tab-close-btn {
+  background: rgba(0, 0, 0, 0.25) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+}
+
+.tab-close-btn:hover {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  border-color: #f87171 !important;
+  transform: scale(1.18);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.8) !important;
+}
+
+/* ─── Smooth scrollbars ─── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
+
+/* ─── Cash Visual Effects Animations ─── */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fade-in 0.25s ease both; }
+
+@keyframes coinFloat {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(5deg); }
+}
+.cash-coin-float {
+  animation: coinFloat 3s ease-in-out infinite;
+}
+
+@keyframes cashGlowPulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.15), inset 0 0 12px rgba(16, 185, 129, 0.05); }
+  50% { box-shadow: 0 0 24px rgba(16, 185, 129, 0.3), inset 0 0 20px rgba(16, 185, 129, 0.1); }
+}
+.cash-glow-card {
+  animation: cashGlowPulse 4s ease-in-out infinite;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.cash-glow-card:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 12px 30px rgba(16, 185, 129, 0.25);
+}
+
+@keyframes shimmerShine {
+  0% { transform: translateX(-100%) rotate(25deg); }
+  100% { transform: translateX(200%) rotate(25deg); }
+}
+.shimmer-container {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-container::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 50%;
+  height: 200%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 100%
+  );
+  transform: rotate(25deg);
+  pointer-events: none;
+}
+.shimmer-container:hover::after {
+  animation: shimmerShine 1.2s ease-in-out;
+}
+
+/* ─── Floating Aesthetic Money Coins Overlay ─── */
+.floating-money-coin {
+  position: absolute;
+  pointer-events: none;
+  animation: floatMoneyAnimation 12s infinite ease-in-out;
+  opacity: 0.35;
+}
+
+@keyframes floatMoneyAnimation {
+  0% { transform: translateY(100vh) rotate(0deg) scale(0.8); opacity: 0; }
+  20% { opacity: 0.4; }
+  80% { opacity: 0.4; }
+  100% { transform: translateY(-10vh) rotate(360deg) scale(1.1); opacity: 0; }
+}
+
+/* ─── Cash card accent gradient ─── */
+.cash-card {
+  background: linear-gradient(135deg,
+    hsl(var(--card)) 0%,
+    hsl(152 40% 97%) 100%
+  );
+}
+.dark .cash-card {
+  background: linear-gradient(135deg,
+    hsl(var(--card)) 0%,
+    hsl(152 30% 12%) 100%
+  );
+}
+
+/* ─── Success Sticker Animations ─── */
+@keyframes sticker-pop-in {
+  0% { transform: scale(0.5) translateY(20px); opacity: 0; }
+  70% { transform: scale(1.1) translateY(-10px); opacity: 1; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+@keyframes sticker-fade-out {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.9); }
+}
+
+@keyframes sticker-bounce {
+  0%, 100% { transform: translateY(-5%); animation-timing-function: cubic-bezier(0.8,0,1,1); }
+  50% { transform: translateY(0); animation-timing-function: cubic-bezier(0,0,0.2,1); }
+}
+
