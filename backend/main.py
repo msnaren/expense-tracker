@@ -49,6 +49,7 @@ origins = [
     "http://localhost:3000", # React default
     "http://127.0.0.1:5173",
     "http://127.0.0.1:3000",
+    "https://expense-tracker-0418.vercel.app",
 ]
 
 app.add_middleware(
