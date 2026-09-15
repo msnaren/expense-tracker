@@ -54,7 +54,7 @@ export const Reports: React.FC = () => {
     if (startDate) params.append('start_date', startDate);
     if (endDate) params.append('end_date', endDate);
 
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://spendwise-backend-zf55.onrender.com';
     window.open(`${apiUrl}/reports/export/csv?${params.toString()}&token=${token}`, '_blank');
   };
 
@@ -64,7 +64,7 @@ export const Reports: React.FC = () => {
     if (startDate) params.append('start_date', startDate);
     if (endDate) params.append('end_date', endDate);
 
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://spendwise-backend-zf55.onrender.com';
     window.open(`${apiUrl}/reports/export/pdf?${params.toString()}&token=${token}`, '_blank');
   };
 
