@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme, type MoneyBgTheme } from '../hooks/useTheme';
 import api from '../services/api';
+import { FloatingAIAssistant } from '../components/FloatingAIAssistant';
 import {
   LayoutDashboard,
   ArrowRightLeft,
@@ -470,6 +471,9 @@ export const DashboardLayout: React.FC = () => {
           <Outlet />
         </main>
       </div>
+
+      {/* Floating AI Assistant Widget */}
+      <FloatingAIAssistant />
     </div>
   );
 };

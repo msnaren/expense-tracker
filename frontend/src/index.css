@@ -32,31 +32,31 @@
   }
 
   .dark {
-    /* ─── Lock In Dark Theme ─── */
-    --background: 28 25% 6%;
-    --foreground: 40 20% 94%;
+    /* ─── Lock In Premium Fintech Dark Theme ─── */
+    --background: 222 47% 4%;
+    --foreground: 210 40% 98%;
 
-    --primary: 38 92% 50%;
-    --primary-foreground: 28 25% 6%;
+    --primary: 150 100% 50%; /* Neon Green */
+    --primary-foreground: 222 47% 4%;
 
-    --secondary: 28 20% 12%;
-    --secondary-foreground: 40 20% 90%;
+    --secondary: 217 33% 15%;
+    --secondary-foreground: 210 40% 98%;
 
-    --card: 28 22% 8%;
-    --card-foreground: 40 20% 94%;
+    --card: 222 47% 6%;
+    --card-foreground: 210 40% 98%;
 
-    --muted: 28 18% 14%;
-    --muted-foreground: 35 15% 60%;
+    --muted: 217 33% 15%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 28 20% 15%;
-    --accent-foreground: 40 20% 92%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 65% 48%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 30 20% 18%;
-    --input: 30 20% 18%;
-    --ring: 38 92% 50%;
+    --border: 217 33% 15%;
+    --input: 217 33% 15%;
+    --ring: 150 100% 50%;
   }
 }
 
@@ -91,10 +91,12 @@ body::before {
 }
 
 .dark .glass-panel {
-  background: #111a14 !important;
+  background: rgba(16, 20, 24, 0.7) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
   color: #f3f4f6 !important;
-  border: 1px solid #1f3025 !important;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
 }
 
 .glass-header {
@@ -104,8 +106,10 @@ body::before {
 }
 
 .dark .glass-header {
-  background: #0d1510 !important;
-  border-bottom: 1px solid #1f3025 !important;
+  background: rgba(16, 20, 24, 0.8) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3) !important;
 }
 
@@ -115,8 +119,9 @@ body::before {
 }
 
 .dark .glass-sidebar {
-  background: #0a110d !important;
-  border-right: 1px solid #1f3025 !important;
+  background: rgba(10, 14, 18, 0.9) !important;
+  backdrop-filter: blur(20px) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
 /* ─── Closable Tabs Bar (Pure White Light Non-Blending) ─── */

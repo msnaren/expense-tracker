@@ -24,6 +24,7 @@ class ChatMessage(BaseModel):
 class ChatResponse(BaseModel):
     text: str
     data: Optional[Dict[str, Any]] = None
+    intent: Optional[Dict[str, Any]] = None
 
 def generate_smart_financial_response(message: str, user: domain.User, db: Session) -> ChatResponse:
     """Smart fallback financial analysis engine based on user's actual database records."""
@@ -164,6 +165,8 @@ async def chat_with_ai(
             transactions = db.query(domain.Transaction).filter(domain.Transaction.user_id == current_user.id).order_by(domain.Transaction.transaction_date.desc()).limit(50).all()
             budgets = db.query(domain.Budget).filter(domain.Budget.user_id == current_user.id).all()
             accounts = db.query(domain.Account).filter(domain.Account.user_id == current_user.id).all()
+            goals = db.query(domain.SavingsGoal).filter(domain.SavingsGoal.user_id == current_user.id).all()
+            savings = db.query(domain.SavingsRecord).filter(domain.SavingsRecord.user_id == current_user.id).all()
 
             context_str = f"User Name: {current_user.name}\n\nAccounts:\n"
             for acc in accounts:
@@ -179,23 +182,46 @@ async def chat_with_ai(
                 cat_name = b.category.name if b.category else 'N/A'
                 context_str += f"- {cat_name}: ₹{b.amount} (Daily limit: ₹{b.daily_amount or 0})\n"
 
-            system_prompt = f"""You are SpendWise AI, an intelligent financial assistant for {current_user.name}.
-Analyze the user's financial data context below to answer questions politely, accurately, and concisely.
-Format all monetary amounts with the ₹ symbol.
+            context_str += "\nSavings Goals:\n"
+            for g in goals:
+                context_str += f"- {g.name}: Target ₹{g.target_amount}, Current ₹{g.current_amount}, Target Date {g.target_date}\n"
 
-User context:
+            system_prompt = f"""You are SpendWise AI, a highly skilled Financial Expert and Personal Finance Assistant for {current_user.name}.
+Your job is to analyze the user's financial data, explain personal finance concepts, and seamlessly help them record transactions via natural language in ANY language (English, Tamil, Hindi, etc.).
+
+IMPORTANT RULES:
+1. DO NOT invent transaction data. Use only the provided context for analysis.
+2. ALWAYS reply in the exact language the user is speaking (e.g. English, Tamil, Hindi, etc.). Support auto-detect. 
+3. MULTILINGUAL TRANSACTION PARSING: If the user states they spent or received money (e.g., "Spent ₹500 on petrol today", "நான் இன்று பெட்ரோலுக்கு 500 ரூபாய் செலவு செய்தேன்", "आज मैंने पेट्रोल पर 500 रुपये खर्च किए"):
+   - Extract the `amount`, `category`, `description`, `date`, and `transaction_type`.
+   - **FALLBACK HANDLING**: If critical information is missing, DO NOT output the `intent` object. Instead, use the `text` field to ask the user for the missing information in their language.
+     - If amount is missing -> ask for the amount.
+     - If category is unclear -> suggest categories and ask.
+     - If date is unclear -> ask for the date (default to today if they imply recent).
+   - If ALL information is present (at least amount and basic category), output the `intent` JSON field so the frontend can show a confirmation UI.
+4. Format all monetary amounts with the ₹ symbol.
+
+User Context Data:
 {context_str}
 
-Respond strictly in valid JSON format with:
+Respond strictly in valid JSON format:
 {{
-  "text": "Your helpful response text here in markdown format.",
+  "text": "Your response text. (Translated to the user's language). If asking for missing transaction details, ask it here.",
   "data": {{
       "type": "bar" | "pie" | "metric",
       "title": "Chart Title",
       "items": [{{"name": "Category A", "value": 100}}]
+  }},
+  "intent": {{
+      "type": "add_transaction",
+      "transaction_type": "Expense" | "Income",
+      "amount": 500,
+      "category": "Transport",
+      "description": "Petrol",
+      "date": "{datetime.now().strftime('%Y-%m-%d')}"
   }}
 }}
-The "data" field is optional.
+The "data" and "intent" fields are optional. Include "intent" ONLY if the user explicitly wants to add a transaction AND all necessary fields (amount, category) are identified.
 """
 
             contents = []
@@ -223,7 +249,8 @@ The "data" field is optional.
                         parsed = json.loads(response.text)
                         return ChatResponse(
                             text=parsed.get("text", "Here is what I found based on your data."),
-                            data=parsed.get("data")
+                            data=parsed.get("data"),
+                            intent=parsed.get("intent")
                         )
                 except Exception:
                     continue
