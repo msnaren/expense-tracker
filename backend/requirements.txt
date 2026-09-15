@@ -9,3 +9,4 @@ bcrypt==5.0.0
 python-jose==3.5.0
 SQLAlchemy==2.0.53
 google-auth==2.40.3
+requests==2.32.5
