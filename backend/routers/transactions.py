@@ -239,3 +239,45 @@ def delete_transaction(transaction_id: int, db: Session = Depends(get_db), curre
     db.commit()
     return None
 
+import logging
+logger = logging.getLogger(__name__)
+
+@router.post("/fix-balances", status_code=status.HTTP_200_OK)
+def fix_corrupted_balances(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """
+    TEMPORARY ENDPOINT TO FIX CORRUPTED -1500 / 1500 BALANCES
+    """
+    cash_acc = db.query(Account).filter(Account.user_id == current_user.id, Account.type.ilike('cash')).first()
+    upi_acc = db.query(Account).filter(Account.user_id == current_user.id, Account.type.ilike('upi')).first()
+
+    if not cash_acc or not upi_acc:
+        logger.warning(f"Fix failed for user {current_user.id}: Accounts not found.")
+        raise HTTPException(status_code=400, detail="Required Cash and UPI accounts not found.")
+
+    if cash_acc.balance != -1500.0 or upi_acc.balance != 1500.0:
+        logger.warning(f"Fix skipped for user {current_user.id}: Balances are not -1500 and 1500.")
+        return {"status": "skipped", "message": "Balances are not corrupted as expected. No changes made."}
+
+    # Verify no legitimate transactions exist for 1500
+    suspicious_txs = db.query(Transaction).filter(
+        Transaction.user_id == current_user.id,
+        Transaction.amount == 1500.0
+    ).count()
+
+    if suspicious_txs > 0:
+        logger.warning(f"Fix skipped for user {current_user.id}: Found {suspicious_txs} transactions of amount 1500.")
+        raise HTTPException(status_code=400, detail=f"Cannot fix automatically. Found {suspicious_txs} transactions explaining this amount.")
+
+    # Atomically correct balances
+    try:
+        cash_acc.balance = 0.0
+        upi_acc.balance = 0.0
+        db.commit()
+        logger.info(f"Successfully corrected corrupted balances for user {current_user.id}.")
+        return {"status": "success", "message": "Cash and UPI balances successfully reset to 0."}
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Failed to correct balances for user {current_user.id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Database error occurred during correction.")
+
+
