@@ -58,8 +58,8 @@ def get_budget_summary(
     monthly_txs = db.query(Transaction).filter(
         Transaction.user_id == current_user.id,
         Transaction.type.ilike('expense'),
-        func.strftime('%m', Transaction.transaction_date) == current_month_str,
-        func.strftime('%Y', Transaction.transaction_date) == current_year_str
+        func.extract('month', Transaction.transaction_date) == target_month,
+        func.extract('year', Transaction.transaction_date) == target_year
     ).all()
 
     # Calculate spent per category

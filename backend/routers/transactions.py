@@ -32,8 +32,8 @@ def check_and_create_budget_notification(db: Session, user_id: int, category_id:
         Transaction.user_id == user_id,
         Transaction.category_id == category_id,
         Transaction.type.ilike('expense'),
-        func.strftime('%m', Transaction.transaction_date) == f"{month:02d}",
-        func.strftime('%Y', Transaction.transaction_date) == str(year)
+        func.extract('month', Transaction.transaction_date) == month,
+        func.extract('year', Transaction.transaction_date) == year
     ).scalar() or 0.0
 
     category = db.query(Category).filter(Category.id == category_id).first()

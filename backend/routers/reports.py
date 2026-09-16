@@ -97,8 +97,8 @@ def get_monthly_report(
 
     txs = db.query(Transaction).filter(
         Transaction.user_id == current_user.id,
-        func.strftime('%m', Transaction.transaction_date) == f"{m:02d}",
-        func.strftime('%Y', Transaction.transaction_date) == str(y)
+        func.extract('month', Transaction.transaction_date) == m,
+        func.extract('year', Transaction.transaction_date) == y
     ).all()
 
     income = sum(t.amount for t in txs if t.type.lower() == 'income')

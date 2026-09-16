@@ -34,8 +34,8 @@ def get_notifications(
             Transaction.user_id == current_user.id,
             Transaction.category_id == b.category_id,
             Transaction.type.ilike('expense'),
-            func.strftime('%m', Transaction.transaction_date) == f"{current_month:02d}",
-            func.strftime('%Y', Transaction.transaction_date) == str(current_year)
+            func.extract('month', Transaction.transaction_date) == current_month,
+            func.extract('year', Transaction.transaction_date) == current_year
         ).scalar() or 0.0
 
         if b.amount > 0 and spent >= b.amount * 0.8:

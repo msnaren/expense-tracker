@@ -264,8 +264,8 @@ def get_expense_forecast(
     current_month_expenses = db.query(func.sum(Transaction.amount)).filter(
         Transaction.user_id == current_user.id,
         Transaction.type.ilike('expense'),
-        func.strftime('%m', Transaction.transaction_date) == f"{now.month:02d}",
-        func.strftime('%Y', Transaction.transaction_date) == str(now.year)
+        func.extract('month', Transaction.transaction_date) == now.month,
+        func.extract('year', Transaction.transaction_date) == now.year
     ).scalar() or 0.0
 
     count_tx = db.query(func.count(Transaction.id)).filter(
@@ -303,8 +303,8 @@ def get_financial_insights(
     current_month_exp = db.query(func.sum(Transaction.amount)).filter(
         Transaction.user_id == current_user.id,
         Transaction.type.ilike('expense'),
-        func.strftime('%m', Transaction.transaction_date) == f"{now.month:02d}",
-        func.strftime('%Y', Transaction.transaction_date) == str(now.year)
+        func.extract('month', Transaction.transaction_date) == now.month,
+        func.extract('year', Transaction.transaction_date) == now.year
     ).scalar() or 0.0
 
     # Top category
@@ -313,8 +313,8 @@ def get_financial_insights(
                 .filter(
                     Transaction.user_id == current_user.id,
                     Transaction.type.ilike('expense'),
-                    func.strftime('%m', Transaction.transaction_date) == f"{now.month:02d}",
-                    func.strftime('%Y', Transaction.transaction_date) == str(now.year)
+                    func.extract('month', Transaction.transaction_date) == now.month,
+                    func.extract('year', Transaction.transaction_date) == now.year
                 ).group_by(Category.name).order_by(desc("cat_total")).first()
 
     if current_month_exp > 0:
