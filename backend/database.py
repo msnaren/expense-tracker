@@ -8,13 +8,11 @@ SQLALCHEMY_DATABASE_URL = os.getenv(
     "sqlite:///./spendwise.db"
 )
 
-# Fix Render PostgreSQL URL if it starts with postgres://
+# Fix Render PostgreSQL URL to use psycopg3
 if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
-    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace(
-        "postgres://",
-        "postgresql://",
-        1
-    )
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1)
+elif SQLALCHEMY_DATABASE_URL.startswith("postgresql://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
