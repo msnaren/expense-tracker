@@ -146,29 +146,10 @@ def create_transaction(
     )
     
     tx_type = transaction.type.lower()
-    pm_lower = (transaction.payment_method or '').lower()
-    target_account = account
-
-    # Match Cash or UPI payment method to target account if needed
-    if 'cash' in pm_lower and target_account.type.lower() != 'cash' and 'cash' not in target_account.name.lower():
-        cash_acc = db.query(Account).filter(
-            Account.user_id == current_user.id,
-            (Account.type.ilike('cash') | Account.name.ilike('%cash%'))
-        ).first()
-        if cash_acc:
-            target_account = cash_acc
-    elif any(k in pm_lower for k in ['upi', 'bank', 'online', 'card']) and (target_account.type.lower() == 'cash' or 'cash' in target_account.name.lower()):
-        upi_acc = db.query(Account).filter(
-            Account.user_id == current_user.id,
-            (Account.type.ilike('upi') | Account.name.ilike('%upi%') | Account.name.ilike('%bank%'))
-        ).first()
-        if upi_acc:
-            target_account = upi_acc
-
     if tx_type == 'income':
-        target_account.balance += transaction.amount
+        account.balance += transaction.amount
     elif tx_type == 'expense':
-        target_account.balance -= transaction.amount
+        account.balance -= transaction.amount
 
     db.add(new_transaction)
     db.commit()
