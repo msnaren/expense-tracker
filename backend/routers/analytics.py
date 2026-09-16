@@ -21,10 +21,30 @@ def get_summary(db: Session = Depends(get_db), current_user: User = Depends(get_
     
     # Query user accounts
     accounts = db.query(Account).filter(Account.user_id == current_user.id).all()
-    total_account_balance = sum(a.balance for a in accounts)
+    def is_savings_acc(a):
+        if not a: return False
+        return 'saving' in a.type.lower() or 'saving' in a.name.lower()
+        
+    def is_cash_acc(a):
+        if not a or is_savings_acc(a): return False
+        return 'cash' in a.type.lower() or 'cash' in a.name.lower()
+        
+    def is_upi_acc(a):
+        if not a or is_savings_acc(a): return False
+        return 'upi' in a.type.lower() or 'upi' in a.name.lower()
+        
+    def is_bank_acc(a):
+        if not a or is_savings_acc(a): return False
+        return 'bank' in a.type.lower() or 'bank' in a.name.lower()
 
-    cash_acc_balance = sum(a.balance for a in accounts if a.type.lower() == 'cash' or 'cash' in a.name.lower())
-    upi_acc_balance = sum(a.balance for a in accounts if a.type.lower() != 'cash' and 'cash' not in a.name.lower())
+    # Liquid balance excludes Savings
+    liquid_accounts = [a for a in accounts if not is_savings_acc(a)]
+    total_account_balance = sum(a.balance for a in liquid_accounts)
+
+    cash_acc_balance = sum(a.balance for a in accounts if is_cash_acc(a))
+    upi_acc_balance = sum(a.balance for a in accounts if is_upi_acc(a))
+    bank_acc_balance = sum(a.balance for a in accounts if is_bank_acc(a))
+    explicit_savings_balance = sum(a.balance for a in accounts if is_savings_acc(a))
 
     # Query all user transactions
     txs = db.query(Transaction).filter(Transaction.user_id == current_user.id).all()
@@ -34,15 +54,11 @@ def get_summary(db: Session = Depends(get_db), current_user: User = Depends(get_
     monthly_income = 0.0
     monthly_expenses = 0.0
 
-    cash_income = 0.0
-    upi_income = 0.0
-    cash_expenses = 0.0
-    upi_expenses = 0.0
+    cash_income, upi_income, bank_income, savings_income = 0.0, 0.0, 0.0, 0.0
+    cash_expenses, upi_expenses, bank_expenses, savings_expenses = 0.0, 0.0, 0.0, 0.0
 
-    monthly_cash_income = 0.0
-    monthly_upi_income = 0.0
-    monthly_cash_expenses = 0.0
-    monthly_upi_expenses = 0.0
+    monthly_cash_income, monthly_upi_income, monthly_bank_income = 0.0, 0.0, 0.0
+    monthly_cash_expenses, monthly_upi_expenses, monthly_bank_expenses = 0.0, 0.0, 0.0
 
     for tx in txs:
         tx_type = tx.type.lower()
@@ -53,40 +69,54 @@ def get_summary(db: Session = Depends(get_db), current_user: User = Depends(get_
         tx_year = tx.transaction_date.strftime('%Y') if tx.transaction_date else ''
         is_current_month = (tx_month == current_month_str and tx_year == current_year_str)
 
-        # Check if Cash or UPI
-        pm = (tx.payment_method or '').lower()
-        acc_name = (tx.account.name if tx.account else '').lower()
-        acc_type = (tx.account.type if tx.account else '').lower()
-
-        is_cash = ('cash' in pm or 'cash' in acc_name or acc_type == 'cash')
+        # Categorize by strict account type, not payment method
+        acc = tx.account
+        if is_savings_acc(acc):
+            tx_cat = 'savings'
+        elif is_cash_acc(acc):
+            tx_cat = 'cash'
+        elif is_bank_acc(acc):
+            tx_cat = 'bank'
+        elif is_upi_acc(acc):
+            tx_cat = 'upi'
+        else:
+            tx_cat = 'other'
 
         if tx_type == 'income':
-            total_income += tx.amount
-            if is_current_month:
-                monthly_income += tx.amount
+            if tx_cat != 'savings':
+                total_income += tx.amount
+                if is_current_month:
+                    monthly_income += tx.amount
 
-            if is_cash:
+            if tx_cat == 'cash':
                 cash_income += tx.amount
-                if is_current_month:
-                    monthly_cash_income += tx.amount
-            else:
+                if is_current_month: monthly_cash_income += tx.amount
+            elif tx_cat == 'upi':
                 upi_income += tx.amount
-                if is_current_month:
-                    monthly_upi_income += tx.amount
+                if is_current_month: monthly_upi_income += tx.amount
+            elif tx_cat == 'bank':
+                bank_income += tx.amount
+                if is_current_month: monthly_bank_income += tx.amount
+            elif tx_cat == 'savings':
+                savings_income += tx.amount
 
         elif tx_type == 'expense':
-            total_expenses += tx.amount
-            if is_current_month:
-                monthly_expenses += tx.amount
+            if tx_cat != 'savings':
+                total_expenses += tx.amount
+                if is_current_month:
+                    monthly_expenses += tx.amount
 
-            if is_cash:
+            if tx_cat == 'cash':
                 cash_expenses += tx.amount
-                if is_current_month:
-                    monthly_cash_expenses += tx.amount
-            else:
+                if is_current_month: monthly_cash_expenses += tx.amount
+            elif tx_cat == 'upi':
                 upi_expenses += tx.amount
-                if is_current_month:
-                    monthly_upi_expenses += tx.amount
+                if is_current_month: monthly_upi_expenses += tx.amount
+            elif tx_cat == 'bank':
+                bank_expenses += tx.amount
+                if is_current_month: monthly_bank_expenses += tx.amount
+            elif tx_cat == 'savings':
+                savings_expenses += tx.amount
 
     # Total Savings from permanent SavingsRecord vault
     from backend.models.domain import SavingsRecord
@@ -98,11 +128,11 @@ def get_summary(db: Session = Depends(get_db), current_user: User = Depends(get_
         SavingsRecord.user_id == current_user.id,
         SavingsRecord.type == "withdrawal"
     ).scalar() or 0.0
-    total_savings = tot_contrib - tot_withdr
+    total_savings = (tot_contrib - tot_withdr) + explicit_savings_balance
     if total_savings <= 0:
         goals = db.query(SavingsGoal).filter(SavingsGoal.user_id == current_user.id).all()
         if goals:
-            total_savings = sum(g.current_amount for g in goals)
+            total_savings = sum(g.current_amount for g in goals) + explicit_savings_balance
 
     return {
         "total_income": round(total_income, 2),
@@ -113,14 +143,19 @@ def get_summary(db: Session = Depends(get_db), current_user: User = Depends(get_
         "monthly_expenses": round(monthly_expenses, 2),
         "cash_balance": round(cash_acc_balance, 2),
         "upi_balance": round(upi_acc_balance, 2),
+        "bank_balance": round(bank_acc_balance, 2),
         "cash_income": round(cash_income, 2),
         "upi_income": round(upi_income, 2),
+        "bank_income": round(bank_income, 2),
         "cash_expenses": round(cash_expenses, 2),
         "upi_expenses": round(upi_expenses, 2),
+        "bank_expenses": round(bank_expenses, 2),
         "monthly_cash_income": round(monthly_cash_income, 2),
         "monthly_upi_income": round(monthly_upi_income, 2),
+        "monthly_bank_income": round(monthly_bank_income, 2),
         "monthly_cash_expenses": round(monthly_cash_expenses, 2),
         "monthly_upi_expenses": round(monthly_upi_expenses, 2),
+        "monthly_bank_expenses": round(monthly_bank_expenses, 2),
     }
 
 @router.get("/categories")
