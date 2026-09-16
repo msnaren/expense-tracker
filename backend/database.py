@@ -16,17 +16,9 @@ if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
         1
     )
 
-connect_args = {}
-
-# SQLite needs this option, PostgreSQL does not
-if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
-    connect_args = {
-        "check_same_thread": False
-    }
-
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
-    connect_args=connect_args
+    connect_args={"check_same_thread": False} if SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
 )
 
 SessionLocal = sessionmaker(
