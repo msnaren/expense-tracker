@@ -136,31 +136,38 @@ def create_transaction(
     if transaction.amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be greater than zero")
 
-    account = db.query(Account).filter(Account.id == transaction.account_id, Account.user_id == current_user.id).with_for_update().first()
-    if not account:
-        raise HTTPException(status_code=404, detail="Account not found")
+    try:
+        account = db.query(Account).filter(Account.id == transaction.account_id, Account.user_id == current_user.id).with_for_update().first()
+        if not account:
+            raise HTTPException(status_code=404, detail="Account not found")
 
-    new_transaction = Transaction(
-        user_id=current_user.id,
-        **transaction.model_dump()
-    )
-    
-    tx_type = transaction.type.lower()
-    if tx_type == 'income':
-        account.balance += transaction.amount
-    elif tx_type == 'expense':
-        account.balance -= transaction.amount
+        new_transaction = Transaction(
+            user_id=current_user.id,
+            **transaction.model_dump()
+        )
+        
+        tx_type = transaction.type.lower()
+        if tx_type == 'income':
+            account.balance += transaction.amount
+        elif tx_type == 'expense':
+            account.balance -= transaction.amount
 
-    db.add(new_transaction)
-    db.commit()
-    db.refresh(new_transaction)
+        db.add(new_transaction)
+        db.flush()
 
-    # Budget alert check
-    if tx_type == 'expense':
-        check_and_create_budget_notification(db, current_user.id, new_transaction.category_id, new_transaction.transaction_date)
+        # Budget alert check
+        if tx_type == 'expense':
+            check_and_create_budget_notification(db, current_user.id, new_transaction.category_id, new_transaction.transaction_date)
+
         db.commit()
-
-    return new_transaction
+        db.refresh(new_transaction)
+        return new_transaction
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.put("/{transaction_id}", response_model=TransactionResponse)
@@ -173,70 +180,85 @@ def update_transaction(
     if transaction_data.amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be greater than zero")
 
-    tx = db.query(Transaction).filter(Transaction.id == transaction_id, Transaction.user_id == current_user.id).first()
-    if not tx:
-        raise HTTPException(status_code=404, detail="Transaction not found")
+    try:
+        tx = db.query(Transaction).filter(Transaction.id == transaction_id, Transaction.user_id == current_user.id).first()
+        if not tx:
+            raise HTTPException(status_code=404, detail="Transaction not found")
 
-    # Target new account
-    new_account = db.query(Account).filter(Account.id == transaction_data.account_id, Account.user_id == current_user.id).with_for_update().first()
-    if not new_account:
-        raise HTTPException(status_code=404, detail="New account not found")
+        # Target new account
+        new_account = db.query(Account).filter(Account.id == transaction_data.account_id, Account.user_id == current_user.id).with_for_update().first()
+        if not new_account:
+            raise HTTPException(status_code=404, detail="New account not found")
 
-    # 1. Reverse old transaction effect on old account
-    old_account = db.query(Account).filter(Account.id == tx.account_id).with_for_update().first()
-    if old_account:
-        old_type = tx.type.lower()
-        if old_type == 'income':
-            old_account.balance -= tx.amount
-        elif old_type == 'expense':
-            old_account.balance += tx.amount
+        # 1. Reverse old transaction effect on old account
+        old_account = db.query(Account).filter(Account.id == tx.account_id).with_for_update().first()
+        if old_account:
+            old_type = tx.type.lower()
+            if old_type == 'income':
+                old_account.balance -= tx.amount
+            elif old_type == 'expense':
+                old_account.balance += tx.amount
 
-    # 2. Update transaction fields
-    tx.account_id = transaction_data.account_id
-    tx.category_id = transaction_data.category_id
-    tx.type = transaction_data.type
-    tx.amount = transaction_data.amount
-    tx.description = transaction_data.description
-    tx.transaction_date = transaction_data.transaction_date
-    tx.payment_method = transaction_data.payment_method
-    tx.receipt_url = transaction_data.receipt_url
-    tx.notes = transaction_data.notes
+        # 2. Update transaction fields
+        tx.account_id = transaction_data.account_id
+        tx.category_id = transaction_data.category_id
+        tx.type = transaction_data.type
+        tx.amount = transaction_data.amount
+        tx.description = transaction_data.description
+        tx.transaction_date = transaction_data.transaction_date
+        tx.payment_method = transaction_data.payment_method
+        tx.receipt_url = transaction_data.receipt_url
+        tx.notes = transaction_data.notes
 
-    # 3. Apply new transaction effect on new account
-    new_type = transaction_data.type.lower()
-    if new_type == 'income':
-        new_account.balance += transaction_data.amount
-    elif new_type == 'expense':
-        new_account.balance -= transaction_data.amount
+        # 3. Apply new transaction effect on new account
+        new_type = transaction_data.type.lower()
+        if new_type == 'income':
+            new_account.balance += transaction_data.amount
+        elif new_type == 'expense':
+            new_account.balance -= transaction_data.amount
 
-    db.commit()
-    db.refresh(tx)
+        db.flush()
 
-    # Budget alert check if expense
-    if new_type == 'expense':
-        check_and_create_budget_notification(db, current_user.id, tx.category_id, tx.transaction_date)
+        # Budget alert check if expense
+        if new_type == 'expense':
+            check_and_create_budget_notification(db, current_user.id, tx.category_id, tx.transaction_date)
+
         db.commit()
+        db.refresh(tx)
 
-    return tx
+        return tx
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_transaction(transaction_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    transaction = db.query(Transaction).filter(Transaction.id == transaction_id, Transaction.user_id == current_user.id).first()
-    if not transaction:
-        raise HTTPException(status_code=404, detail="Transaction not found")
-        
-    # Revert account balance
-    account = db.query(Account).filter(Account.id == transaction.account_id).with_for_update().first()
-    if account:
-        tx_type = transaction.type.lower()
-        if tx_type == 'income':
-            account.balance -= transaction.amount
-        elif tx_type == 'expense':
-            account.balance += transaction.amount
+    try:
+        transaction = db.query(Transaction).filter(Transaction.id == transaction_id, Transaction.user_id == current_user.id).first()
+        if not transaction:
+            raise HTTPException(status_code=404, detail="Transaction not found")
             
-    db.delete(transaction)
-    db.commit()
-    return None
+        # Revert account balance
+        account = db.query(Account).filter(Account.id == transaction.account_id).with_for_update().first()
+        if account:
+            tx_type = transaction.type.lower()
+            if tx_type == 'income':
+                account.balance -= transaction.amount
+            elif tx_type == 'expense':
+                account.balance += transaction.amount
+                
+        db.delete(transaction)
+        db.commit()
+        return None
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
