@@ -136,7 +136,7 @@ def create_transaction(
     if transaction.amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be greater than zero")
 
-    account = db.query(Account).filter(Account.id == transaction.account_id, Account.user_id == current_user.id).first()
+    account = db.query(Account).filter(Account.id == transaction.account_id, Account.user_id == current_user.id).with_for_update().first()
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
 
@@ -178,12 +178,12 @@ def update_transaction(
         raise HTTPException(status_code=404, detail="Transaction not found")
 
     # Target new account
-    new_account = db.query(Account).filter(Account.id == transaction_data.account_id, Account.user_id == current_user.id).first()
+    new_account = db.query(Account).filter(Account.id == transaction_data.account_id, Account.user_id == current_user.id).with_for_update().first()
     if not new_account:
         raise HTTPException(status_code=404, detail="New account not found")
 
     # 1. Reverse old transaction effect on old account
-    old_account = db.query(Account).filter(Account.id == tx.account_id).first()
+    old_account = db.query(Account).filter(Account.id == tx.account_id).with_for_update().first()
     if old_account:
         old_type = tx.type.lower()
         if old_type == 'income':
@@ -227,7 +227,7 @@ def delete_transaction(transaction_id: int, db: Session = Depends(get_db), curre
         raise HTTPException(status_code=404, detail="Transaction not found")
         
     # Revert account balance
-    account = db.query(Account).filter(Account.id == transaction.account_id).first()
+    account = db.query(Account).filter(Account.id == transaction.account_id).with_for_update().first()
     if account:
         tx_type = transaction.type.lower()
         if tx_type == 'income':
