@@ -8,5 +8,8 @@ export default defineConfig({
     host: true, // Listen on all local IP addresses (127.0.0.1 and localhost)
     port: 5173,
     strictPort: true
+  },
+  build: {
+    chunkSizeWarningLimit: 2000
   }
 })

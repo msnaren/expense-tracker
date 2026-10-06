@@ -3,6 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 load_dotenv()
 
+import ssl
+import certifi
+import os
+
+os.environ['SSL_CERT_FILE'] = certifi.where()
+ssl._create_default_https_context = ssl._create_unverified_context
+
+
 from backend.database import engine, Base
 from backend.routers import (
     auth_router,
